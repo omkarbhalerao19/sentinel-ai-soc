@@ -181,5 +181,5 @@ python simulate_traffic.py
 
 **Omkar Kailas Bhalerao**  
 🎓 *Bachelor of Business Administration in Computer Applications — BBA (CA)*  
-🏛️ Marathwada Mitra Mandal's College of Commerce (MMCC), Savitribai Phule Pune University (SPPU)  
+ 
 💼 **Focus Areas:** Cybersecurity Operations (SecOps), AI/ML Engineering, Full-Stack Python Development
