@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <title>SentinelAI | Autonomous SecOps & Threat Intelligence</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans p-6">
+  <div class="max-w-7xl mx-auto space-y-6">
+    <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+      <div>
+        <h1 class="text-2xl font-bold text-emerald-400 tracking-tight">SentinelAI SOC Platform</h1>
+        <p class="text-sm text-slate-400">Real-Time IsolationForest Anomaly Detection + MITRE ATT&CK RAG Agent</p>
+      </div>
+      <span class="px-3 py-1 text-xs font-semibold rounded-full bg-emerald-950 text-emerald-400 border border-emerald-700">
+        Live Stream Connected
+      </span>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+        <p class="text-xs uppercase text-slate-400">Total Packets Inspected</p>
+        <p id="total-packets" class="text-3xl font-bold text-white mt-1">0</p>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+        <p class="text-xs uppercase text-slate-400">Anomalies Flagged & Mitigated</p>
+        <p id="anomalies-blocked" class="text-3xl font-bold text-rose-500 mt-1">0</p>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+        <p class="text-xs uppercase text-slate-400">Latest Packet Risk Index</p>
+        <p id="latest-risk" class="text-3xl font-bold text-amber-400 mt-1">0 / 100</p>
+      </div>
+    </div>
+    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+      <h2 class="text-sm font-semibold text-slate-300 mb-3">Real-Time ML Anomaly Risk Score Stream</h2>
+      <canvas id="trafficChart" height="75"></canvas>
+    </div>
+    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+      <h2 class="text-sm font-semibold text-slate-300 mb-4">Autonomous LLM SecOps Incident Response Feed</h2>
+      <div id="incident-list" class="space-y-3 max-h-96 overflow-y-auto">
+        <p class="text-slate-500 text-sm" id="empty-state">Waiting for anomalous traffic...</p>
+      </div>
+    </div>
+  </div>
+  <script>
+    const ctx = document.getElementById('trafficChart').getContext('2d');
+    const chartData = { labels: [], datasets: [{ label: 'ML Risk Score (0-100)', data: [], borderColor: '#10b981', tension: 0.3, fill: false }] };
+    const chart = new Chart(ctx, { type: 'line', data: chartData, options: { scales: { y: { min: 0, max: 100 } }, animation: false } });
+    const ws = new WebSocket(`ws://${window.location.host}/ws/alerts`);
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      document.getElementById('total-packets').innerText = data.total_packets;
+      document.getElementById('anomalies-blocked').innerText = data.anomalies_blocked;
+      document.getElementById('latest-risk').innerText = `${data.risk_index} / 100`;
+      if (chartData.labels.length > 30) { chartData.labels.shift(); chartData.datasets[0].data.shift(); }
+      chartData.labels.push(data.timestamp);
+      chartData.datasets[0].data.push(data.risk_index);
+      chart.update();
+      if (data.is_anomaly && data.report) {
+        const empty = document.getElementById('empty-state');
+        if (empty) empty.remove();
+        const r = data.report;
+        const card = document.createElement('div');
+        card.className = "p-4 rounded-lg bg-slate-950 border border-rose-800/80 space-y-2";
+        card.innerHTML = `
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-rose-400">[${r.mitre_id}] ${r.threat_type} - IP: ${data.source_ip}</span>
+            <span class="text-xs px-2 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-700">${r.severity} | Risk: ${data.risk_index}/100</span>
+          </div>
+          <p class="text-xs text-slate-300">${r.explanation}</p>
+          <div class="bg-slate-900 p-2 rounded border border-slate-800 flex justify-between items-center">
+            <code class="text-xs text-emerald-400">${r.mitigation_command}</code>
+          </div>
+        `;
+        document.getElementById('incident-list').prepend(card);
+      }
+    };
+  </script>
+</body>
+</html>
