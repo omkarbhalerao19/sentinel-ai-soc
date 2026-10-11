@@ -179,7 +179,7 @@ python simulate_traffic.py
 
 ## 👨‍💻 Author & Contact
 
-**Omkar Kailas Bhalerao**  
+**Omkar Bhalerao**  
 🎓 *Bachelor of Business Administration in Computer Applications — BBA (CA)*  
  
 💼 **Focus Areas:** Cybersecurity Operations (SecOps), AI/ML Engineering, Full-Stack Python Development
